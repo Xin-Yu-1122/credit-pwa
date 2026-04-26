@@ -1,15 +1,15 @@
 // Service Worker - 信用卡記帳 PWA
-// 版本號：每次更新靜態檔案時遞增
-var CACHE_NAME = 'credit-card-pwa-v1';
+// 修正：使用相對路徑，支援子目錄部署
+var CACHE_NAME = 'credit-card-pwa-v2';
 
-// 需要快取的靜態資源
+// 需要快取的靜態資源（相對路徑）
 var STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/apple-touch-icon.png'
+  './',
+  './index.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './apple-touch-icon.png'
 ];
 
 // 安裝：快取靜態資源
@@ -18,13 +18,12 @@ self.addEventListener('install', function(event) {
     caches.open(CACHE_NAME).then(function(cache) {
       return cache.addAll(STATIC_ASSETS);
     }).then(function() {
-      // 立即接管頁面，不等待舊 SW 失效
       return self.skipWaiting();
     })
   );
 });
 
-// 啟用：清除舊快取
+// 啟用：清除舊版快取
 self.addEventListener('activate', function(event) {
   event.waitUntil(
     caches.keys().then(function(keys) {
@@ -38,13 +37,14 @@ self.addEventListener('activate', function(event) {
   );
 });
 
-// 攔截請求：靜態資源用快取，Apps Script 請求直接走網路
+// 攔截請求
 self.addEventListener('fetch', function(event) {
   var url = event.request.url;
 
-  // Apps Script 的請求不快取，直接走網路
+  // Apps Script / Google API 不快取，直接走網路
   if (url.indexOf('script.google.com') !== -1 ||
-      url.indexOf('googleapis.com') !== -1) {
+      url.indexOf('googleapis.com') !== -1 ||
+      url.indexOf('googleusercontent.com') !== -1) {
     event.respondWith(fetch(event.request));
     return;
   }
@@ -53,16 +53,18 @@ self.addEventListener('fetch', function(event) {
   event.respondWith(
     caches.match(event.request).then(function(cached) {
       return cached || fetch(event.request).then(function(response) {
-        // 成功取得後也存入快取
-        var toCache = response.clone();
-        caches.open(CACHE_NAME).then(function(cache) {
-          cache.put(event.request, toCache);
-        });
+        // 只快取同源的成功回應
+        if (response && response.status === 200 && response.type === 'basic') {
+          var toCache = response.clone();
+          caches.open(CACHE_NAME).then(function(cache) {
+            cache.put(event.request, toCache);
+          });
+        }
         return response;
       });
     }).catch(function() {
-      // 完全離線時，回傳快取的首頁
-      return caches.match('/index.html');
+      // 完全離線時回傳首頁
+      return caches.match('./index.html');
     })
   );
 });
