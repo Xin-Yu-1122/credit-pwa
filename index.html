@@ -1,50 +1,84 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="信用卡記帳">
-  <meta name="theme-color" content="#1a2332">
-  <link rel="manifest" href="manifest.json">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
-  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-  <title>信用卡記帳</title>
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{
-      font-family:-apple-system,BlinkMacSystemFont,"PingFang TC",sans-serif;
-      background:#1a2332;
-      min-height:100vh;
-      display:flex;flex-direction:column;
-      align-items:center;justify-content:center;
-      color:white;
-    }
-    img{width:72px;height:72px;border-radius:16px;margin-bottom:14px;box-shadow:0 6px 24px rgba(0,0,0,.3)}
-    h1{font-size:18px;font-weight:600;margin-bottom:6px}
-    p{font-size:13px;color:rgba(255,255,255,.5)}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    .loader{width:20px;height:20px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-top:24px}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="信用卡記帳">
+<meta name="theme-color" content="#534AB7">
+<title>信用卡記帳</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;width:100%;font-family:-apple-system,'PingFang TC','Noto Sans TC',sans-serif;background:linear-gradient(135deg,#534AB7 0%,#3C3489 100%);color:#fff;overflow:hidden}
+.wrap{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center}
+.icon{width:88px;height:88px;border-radius:20px;margin-bottom:16px;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+h1{font-size:22px;font-weight:600;margin-bottom:8px;letter-spacing:.5px}
+.sub{color:rgba(255,255,255,.7);font-size:14px;margin-bottom:32px;line-height:1.7}
+.btn{background:#fff;color:#333;padding:14px 32px;border-radius:24px;font-size:15px;font-weight:600;text-decoration:none;display:inline-flex;align-items:center;gap:10px;box-shadow:0 4px 16px rgba(0,0,0,.2);transition:transform .1s;border:none;cursor:pointer;font-family:inherit}
+.btn:active{transform:scale(.97)}
+.spin{display:inline-block;width:18px;height:18px;border:3px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.note{position:absolute;bottom:24px;left:24px;right:24px;font-size:11px;color:rgba(255,255,255,.5);line-height:1.6}
+</style>
 </head>
 <body>
-  <img src="icon-192.png" alt="">
+<div class="wrap" id="loading">
+  <img src="icon-192.png" class="icon" alt="">
   <h1>信用卡記帳</h1>
-  <p>載入中，請稍候…</p>
-  <div class="loader"></div>
+  <div class="spin"></div>
+  <div class="sub">準備中…</div>
+</div>
 
-  <script>
-    // 註冊 Service Worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
-    }
+<div class="wrap" id="ready" style="display:none">
+  <img src="icon-192.png" class="icon" alt="">
+  <h1>信用卡記帳</h1>
+  <div class="sub">點下方按鈕進入記帳介面<br>需要 Google 帳號授權</div>
+  <button class="btn" onclick="goToApp()">
+    <span style="font-size:18px">📊</span>
+    開啟記帳工具
+  </button>
+  <div class="note">
+    若按鈕沒反應，請允許彈出視窗<br>
+    或直接<a href="#" onclick="goToApp();return false" style="color:rgba(255,255,255,.8)">點此開啟</a>
+  </div>
+</div>
 
-    // 直接跳轉到 Apps Script
-    var TARGET = 'https://script.google.com/macros/s/AKfycbz7m2TZaYim0uvaObhebTGEIJYK4BW_HjFAsC_snRvmPxxt0vIljs59ypNGoPcNY2xj0A/exec';
-    window.location.replace(TARGET);
-  </script>
+<script>
+const TARGET_URL = 'https://script.google.com/macros/s/AKfycbz7m2TZaYim0uvaObhebTGEIJYK4BW_HjFAsC_snRvmPxxt0vIljs59ypNGoPcNY2xj0A/exec';
+
+// 註冊 Service Worker（PWA 必備）
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW failed:', e));
+}
+
+function goToApp() {
+  // 直接跳轉到 Apps Script
+  window.location.href = TARGET_URL;
+}
+
+// 判斷是 PWA 模式還是瀏覽器模式
+const isPWA = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+
+// 如果是從瀏覽器一般打開（非 PWA 模式），自動跳轉
+// 如果是 PWA 模式（從主畫面點進來），先停留 1 秒讓使用者看到啟動畫面，再跳轉
+window.addEventListener('load', () => {
+  if (isPWA) {
+    // PWA 模式：顯示按鈕讓使用者主動點，避免循環觸發
+    setTimeout(() => {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('ready').style.display = 'flex';
+    }, 800);
+  } else {
+    // 瀏覽器模式：1 秒後自動跳轉
+    setTimeout(goToApp, 1000);
+  }
+});
+</script>
 </body>
 </html>
