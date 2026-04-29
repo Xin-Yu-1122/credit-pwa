@@ -2,97 +2,49 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-  <!-- PWA Meta -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="信用卡記帳">
-  <meta name="application-name" content="信用卡記帳">
-  <meta name="theme-color" content="#534AB7">
-
-  <!-- Icons -->
+  <meta name="theme-color" content="#1a2332">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
   <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
-
   <title>信用卡記帳</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    html, body {
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-      background: #534AB7;
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{
+      font-family:-apple-system,BlinkMacSystemFont,"PingFang TC",sans-serif;
+      background:#1a2332;
+      min-height:100vh;
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      color:white;
     }
-    /* 啟動畫面 */
-    #splash {
-      position: fixed;
-      inset: 0;
-      background: linear-gradient(135deg, #534AB7 0%, #3C3489 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 999;
-      transition: opacity 0.4s ease;
-    }
-    #splash img { width: 88px; height: 88px; border-radius: 20px; margin-bottom: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.3); }
-    #splash h1 { color: white; font-family: -apple-system, "PingFang TC", sans-serif; font-size: 20px; font-weight: 600; letter-spacing: 0.5px; }
-    #splash p  { color: rgba(255,255,255,0.6); font-family: -apple-system, sans-serif; font-size: 13px; margin-top: 6px; }
-    #splash.hidden { opacity: 0; pointer-events: none; }
-
-    iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-      display: block;
-    }
+    img{width:72px;height:72px;border-radius:16px;margin-bottom:14px;box-shadow:0 6px 24px rgba(0,0,0,.3)}
+    h1{font-size:18px;font-weight:600;margin-bottom:6px}
+    p{font-size:13px;color:rgba(255,255,255,.5)}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .loader{width:20px;height:20px;border:2px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;margin-top:24px}
   </style>
 </head>
 <body>
-
-  <!-- 啟動畫面 -->
-  <div id="splash">
-    <img src="icon-192.png" alt="記帳">
-    <h1>信用卡記帳</h1>
-    <p>載入中…</p>
-  </div>
-
-  <!-- 主內容 -->
-  <iframe
-    id="app"
-    src="https://script.google.com/macros/s/AKfycbz7m2TZaYim0uvaObhebTGEIJYK4BW_HjFAsC_snRvmPxxt0vIljs59ypNGoPcNY2xj0A/exec"
-    onload="hideSplash()"
-    allow="fullscreen"
-  ></iframe>
+  <img src="icon-192.png" alt="">
+  <h1>信用卡記帳</h1>
+  <p>載入中，請稍候…</p>
+  <div class="loader"></div>
 
   <script>
-    // 隱藏啟動畫面
-    function hideSplash() {
-      setTimeout(function() {
-        document.getElementById('splash').classList.add('hidden');
-        setTimeout(function() {
-          document.getElementById('splash').style.display = 'none';
-        }, 400);
-      }, 300);
-    }
-
-    // 若 5 秒後還沒載入也強制隱藏
-    setTimeout(hideSplash, 5000);
-
-    // 安裝 Service Worker
+    // 註冊 Service Worker
     if ('serviceWorker' in navigator) {
-      window.addEventListener('load', function() {
-        navigator.serviceWorker.register('sw.js').then(function(reg) {
-          console.log('SW registered:', reg.scope);
-        }).catch(function(e) {
-          console.log('SW error:', e);
-        });
-      });
+      navigator.serviceWorker.register('sw.js');
     }
+
+    // 直接跳轉到 Apps Script
+    var TARGET = 'https://script.google.com/macros/s/AKfycbz7m2TZaYim0uvaObhebTGEIJYK4BW_HjFAsC_snRvmPxxt0vIljs59ypNGoPcNY2xj0A/exec';
+    window.location.replace(TARGET);
   </script>
 </body>
 </html>
